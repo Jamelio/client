@@ -1,1 +1,1 @@
-# landing
+# Jamelio client app
