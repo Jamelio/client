@@ -27,7 +27,7 @@ module.exports = {
   },
   output: {
     filename: '[name].js',
-    path: path.resolve(__dirname, '../peer-server/client')
+    path: path.resolve(__dirname, '../server/client')
   },
   plugins: [
     new webpack.DefinePlugin({

@@ -4,8 +4,10 @@ import { constraints } from '../config';
 
 const useConnector = () => {
   const [peer, setPeer] = useState<any>();
+  const [isConnected, setConnectedStatus] = useState<boolean>(false);
   const [peerId, setPeerId] = useState<string>('');
   const [recipientPeerId, setRecipientPeerId] = useState<string>('');
+
 
   const connectToServer = useCallback(async () => {
       console.log(`Will connect as ${peerId}`);
@@ -13,15 +15,26 @@ const useConnector = () => {
       const peer = await new Peer(peerId, {
         host: 'jamelio.dev',
         port: 443,
-        path: '/jamelio',
+        path: '/peer',
         debug: 1,
       });
+      setConnectedStatus(true);
 
       peer.on('connection', (conn) => {
         conn.on('data', (data) => {
           // Will print 'hi!'
           console.log(data);
         });
+      });
+
+      peer.on('close', () => {
+        console.log('connection closed')
+        setConnectedStatus(false);
+      });
+
+      peer.on('disconnected', () => {
+        console.log('connection disconnected')
+        setConnectedStatus(false);
       });
 
       peer.on('call', async (call: any) => {
@@ -38,7 +51,6 @@ const useConnector = () => {
 
       });
 
-      console.log(peer)
       setPeer(peer);
     }, [peerId],
   )
@@ -66,7 +78,24 @@ const useConnector = () => {
     }, [peer],
   )
 
-  return { peer, peerId, setPeer, setPeerId, connectToServer, connectToPeer, setRecipientPeerId, recipientPeerId }
+  const disconnectFromServer = useCallback(async () => {
+      console.log(`Will disconnect`)
+      peer.disconnect();
+    }, [peer],
+  )
+
+  return {
+    peer,
+    peerId,
+    setPeer,
+    setPeerId,
+    connectToServer,
+    disconnectFromServer,
+    connectToPeer,
+    setRecipientPeerId,
+    recipientPeerId,
+    isConnected,
+  }
 }
 
 export { useConnector };
