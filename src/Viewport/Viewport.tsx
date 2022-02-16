@@ -1,9 +1,18 @@
-import React, { useEffect } from 'react';
-import { ButtonsRow, MainContainer, NicknameInput, SubmitButton, VideoContainer } from './Viewport.styles';
-import { usePeerConnector } from '../hooks/usePeerConnector';
-import { useMembers } from '../hooks/useMembers';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { MainContainer, NicknameInput, SubmitButton, VideoContainer } from './Viewport.styles';
+import { usePeerConnector } from '@/hooks/usePeerConnector';
+import { useMembers } from '@/hooks/useMembers';
+import { useToken } from '@/hooks/useToken';
 
 const Viewport = () => {
+  const meVideoRef = useRef<HTMLVideoElement>(null);
+
+  const onStreamStarted = (remoteStream: MediaStream) => {
+    meVideoRef.current!.srcObject = remoteStream;
+
+    // const videoMe = document.querySelector('video#me');
+    // (videoMe as any).srcObject = stream;
+  }
   const {
     peerId,
     setPeerId,
@@ -16,9 +25,12 @@ const Viewport = () => {
     connectToNextPeer,
     isConnected,
     isInCall,
-  } = usePeerConnector();
+  } = usePeerConnector(onStreamStarted);
 
   const { getMemberId } = useMembers();
+  const { getToken } = useToken();
+
+  const [token, setToken] = useState<string>('');
 
   const connectionStatusButtonLabel = isConnected ? 'Connected' : 'Connect to server'
 
@@ -31,8 +43,33 @@ const Viewport = () => {
     }
   }, [setPeerId])
 
+  const populateToken = useCallback(async () => {
+      const token = await getToken();
+      setToken(token);
+    },
+    [getToken])
+
+  useEffect(() => {
+    populateToken()
+  }, [])
+
   return (
     <MainContainer>
+      <SubmitButton onClick={() => {
+        navigator.clipboard.writeText(token);
+      }}>Copy Token to Clipboard</SubmitButton>
+
+      <SubmitButton onClick={() => {
+        const blob = new Blob([token], { type: 'text/csv' });
+        const elem = window.document.createElement('a');
+        elem.href = window.URL.createObjectURL(blob);
+        elem.download = 'token_key.txt';
+        document.body.appendChild(elem);
+        elem.click();
+        document.body.removeChild(elem);
+
+      }}>Download Token</SubmitButton>
+
       <NicknameInput
         disabled={isConnected}
         placeholder="Your nickname"
@@ -70,10 +107,10 @@ const Viewport = () => {
 
       {
         isInCall ?
-            <SubmitButton onClick={() => {
-              disconnectFromPeer(recipientPeerId).catch(console.log)
-            }}>Disconnect from peer
-            </SubmitButton>
+          <SubmitButton onClick={() => {
+            disconnectFromPeer(recipientPeerId).catch(console.log)
+          }}>Disconnect from peer
+          </SubmitButton>
           :
           <SubmitButton disabled={!recipientPeerId} onClick={() => {
             connectToPeer(recipientPeerId).catch(console.log)
@@ -88,7 +125,7 @@ const Viewport = () => {
 
       <VideoContainer>
         <p>Me</p>
-        <video id="me" autoPlay playsInline />
+        <video ref={meVideoRef} id="me" autoPlay playsInline />
 
         <p>Guest</p>
         <video id="recipient" autoPlay playsInline />

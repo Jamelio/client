@@ -1,9 +1,10 @@
 import { useCallback, useState } from 'react';
 import Peer, { DataConnection } from 'peerjs';
-import { constraints } from '../config';
-import { useMembers } from '../hooks/useMembers';
+import { constraints } from '@/config';
+import { useMembers } from '@/hooks/useMembers';
+import { peerConfig } from '@/config/peerConfig';
 
-const usePeerConnector = () => {
+const usePeerConnector = (onStreamStarted: any) => {
   const [peer, setPeer] = useState<Peer>();
   const [peerId, setPeerId] = useState<string>('');
   const [recipientPeerId, setRecipientPeerId] = useState<string>('');
@@ -14,17 +15,15 @@ const usePeerConnector = () => {
   const connectToServer = useCallback(async () => {
       console.log(`Will connect as ${peerId}`);
 
-      const peer = await new Peer(peerId, {
-        host: 'jamelio.dev',
-        port: 443,
-        path: '/peer',
-        debug: 1,
-      });
+      const peer = await new Peer(peerId, peerConfig);
 
+      // Happens when the user connects to the server
       peer.on('open', (peerId: string) => {
         console.log(`Connected as ${peerId}`)
       });
 
+
+      // Happens when some other user connects to me
       peer.on('connection', (conn) => {
         setConnection(conn);
         console.log(`Incoming connection from ${conn.peer}`)
@@ -46,27 +45,22 @@ const usePeerConnector = () => {
         setConnection(undefined)
       });
 
-      peer.on('call', async (call: any) => {
+      // Happens when some other user calls me
+      peer.on('call', async (call) => {
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         call.answer(stream); // Answer the call with an A/V stream.
-        call.on('stream', function (remoteStream: any) {
-          const videoRecipient = document.querySelector('video#recipient');
-          (videoRecipient as any).srcObject = remoteStream;
-
-          const videoMe = document.querySelector('video#me');
-          (videoMe as any).srcObject = stream;
-
+        call.on('stream', (remoteStream) => {
+          onStreamStarted(remoteStream);
         });
 
       });
 
       setPeer(peer);
-    }, [peerId],
+    }, [onStreamStarted, peerId],
   )
 
-  const handleSuccess = (stream: any, videoQuery: string) => {
+  const handleSuccess = (stream: MediaStream, videoQuery: string) => {
     const video = document.querySelector(videoQuery);
-    (window as any).stream = stream; // make variable available to browser console
     (video as any).srcObject = stream;
   };
 
@@ -96,7 +90,7 @@ const usePeerConnector = () => {
       console.log(recipientPeerId)
 
       const call = peer?.call(recipientPeerId, stream);
-      call?.on('stream', function (remoteStream: any) {
+      call?.on('stream', (remoteStream) => {
         console.log('stream started')
         handleSuccess(remoteStream, 'video#recipient');
       });
