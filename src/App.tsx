@@ -10,9 +10,9 @@ const GlobalStyle = createGlobalStyle`
   }
 
   video {
-    background: green;
+    background: rgba(0, 0, 0, 0.2);
     margin: 5px;
-    width: 200px;
+    width: 300px;
     display: block;
   }
 `

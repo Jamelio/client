@@ -49,4 +49,5 @@ module.exports = {
     compress: true,
     port: 443,
   },
+  devtool: "source-map"
 }

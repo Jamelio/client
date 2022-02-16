@@ -1,6 +1,7 @@
-import React from 'react';
-import { MainContainer, NicknameInput, SubmitButton } from './Viewport.styles';
-import { useConnector } from '../PeerConnector/useConnector';
+import React, { useEffect } from 'react';
+import { ButtonsRow, MainContainer, NicknameInput, SubmitButton, VideoContainer } from './Viewport.styles';
+import { usePeerConnector } from '../hooks/usePeerConnector';
+import { useMembers } from '../hooks/useMembers';
 
 const Viewport = () => {
   const {
@@ -11,10 +12,24 @@ const Viewport = () => {
     setRecipientPeerId,
     recipientPeerId,
     connectToPeer,
+    disconnectFromPeer,
+    connectToNextPeer,
     isConnected,
-  } = useConnector();
+    isInCall,
+  } = usePeerConnector();
+
+  const { getMemberId } = useMembers();
 
   const connectionStatusButtonLabel = isConnected ? 'Connected' : 'Connect to server'
+
+  useEffect(() => {
+    const params = new Proxy(new URLSearchParams(window.location.search), {
+      get: (searchParams, prop: string) => searchParams.get(prop),
+    });
+    if ((params as any).peerId) {
+      setPeerId((params as any).peerId || '')
+    }
+  }, [setPeerId])
 
   return (
     <MainContainer>
@@ -23,7 +38,7 @@ const Viewport = () => {
         placeholder="Your nickname"
         value={peerId}
         type="text" onChange={(e) => {
-        setPeerId(e.currentTarget.value)
+        setPeerId(e.currentTarget.value || '')
       }} />
       {isConnected ? <SubmitButton
           onClick={() => {
@@ -32,8 +47,11 @@ const Viewport = () => {
         </SubmitButton>
         :
         <SubmitButton
-          onClick={() => {
+          disabled={!peerId}
+          onClick={async () => {
             connectToServer().catch(console.log)
+            const { id: memberId } = await getMemberId(peerId).catch(console.log)
+            setRecipientPeerId(memberId || '')
           }}>{connectionStatusButtonLabel}
         </SubmitButton>
       }
@@ -42,24 +60,42 @@ const Viewport = () => {
       <br />
       <br />
 
-      <NicknameInput placeholder="Recipient nickname"
-                     value={recipientPeerId}
-                     type="text" onChange={(e) => {
-        setRecipientPeerId(e.currentTarget.value)
+      <NicknameInput
+        disabled={isInCall}
+        placeholder="Recipient nickname"
+        value={recipientPeerId}
+        type="text" onChange={(e) => {
+        setRecipientPeerId(e.currentTarget.value || '')
       }} />
+
+      {
+        isInCall ?
+            <SubmitButton onClick={() => {
+              disconnectFromPeer(recipientPeerId).catch(console.log)
+            }}>Disconnect from peer
+            </SubmitButton>
+          :
+          <SubmitButton disabled={!recipientPeerId} onClick={() => {
+            connectToPeer(recipientPeerId).catch(console.log)
+          }}>Connect to peer
+          </SubmitButton>
+      }
+
       <SubmitButton onClick={() => {
-        connectToPeer(recipientPeerId).catch(console.log)
-      }}>Connect to peer
+        connectToNextPeer().catch(console.log)
+      }}>Next peer
       </SubmitButton>
 
-      <p>Me</p>
-      <video id="me" autoPlay playsInline />
+      <VideoContainer>
+        <p>Me</p>
+        <video id="me" autoPlay playsInline />
 
-      <p>Guest</p>
-      <video id="recipient" autoPlay playsInline />
-
+        <p>Guest</p>
+        <video id="recipient" autoPlay playsInline />
+      </VideoContainer>
     </MainContainer>
   )
 
 }
+
 export { Viewport }
