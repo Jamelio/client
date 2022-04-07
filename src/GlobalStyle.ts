@@ -1,9 +1,18 @@
-import { createGlobalStyle } from 'styled-components';
+import { createGlobalStyle } from 'styled-components'
 
 export const GlobalStyle = createGlobalStyle`
+  * {
+    font-family: sans-serif;
+  }
+
+  html, body, #root {
+    width: 100%;
+    height: 100%;
+  }
+
   body {
-    background-color: black;
-    padding: 10px;
+    background-color: #fff;
+    padding: 0;
     margin: 0;
     touch-action: pan-x pan-y;
   }

@@ -30,7 +30,7 @@ module.exports = {
   },
   output: {
     filename: '[name].js',
-    path: path.resolve(__dirname, '../server/client')
+    path: path.resolve(__dirname, 'dist')
   },
   plugins: [
     new webpack.DefinePlugin({
@@ -41,6 +41,7 @@ module.exports = {
     })
   ],
   devServer: {
+    historyApiFallback: true,
     https: {
       key: fs.readFileSync('./certs/jamelio.local+2-key.pem'),
       cert: fs.readFileSync('./certs/jamelio.local+2.pem'),
@@ -52,5 +53,5 @@ module.exports = {
     compress: true,
     port: 443,
   },
-  devtool: "source-map"
+  devtool: "source-map",
 }
