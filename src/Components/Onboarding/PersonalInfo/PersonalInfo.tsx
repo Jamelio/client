@@ -3,6 +3,7 @@ import React from 'react'
 import { ButtonsRow } from '@/Viewport/Viewport.styles'
 import { LinkButton, MainContainer } from '@/Components/Common/Common.styles'
 import { Header } from '@/Components/Header/Header'
+import { KeyUploaderBox } from '@/Components/KeyUploaderBox/KeyUploaderBox'
 
 const PersonalInfo = () => {
   return <MainContainer>
@@ -15,6 +16,8 @@ const PersonalInfo = () => {
       </LinkButton>
 
     </ButtonsRow>
+
+    <KeyUploaderBox />
 
   </MainContainer>
 }

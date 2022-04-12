@@ -23,4 +23,9 @@ export const GlobalStyle = createGlobalStyle`
     width: 300px;
     display: block;
   }
+
+  input, button {
+    margin: 10px;
+  }
+
 `

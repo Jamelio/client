@@ -41,6 +41,20 @@ module.exports = {
     })
   ],
   devServer: {
+    proxy: {
+      '/api': {
+        target: 'http://192.168.0.24:3000',
+        pathRewrite: {'^/api' : ''},
+        secure:false,
+        changeOrigin:true,
+        logLevel: 'debug'
+      },
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+        "Access-Control-Allow-Headers": "X-Requested-With, content-type, Authorization"
+      }
+    },
     historyApiFallback: true,
     https: {
       key: fs.readFileSync('./certs/jamelio.local+2-key.pem'),
